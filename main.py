@@ -4,6 +4,12 @@ import numpy as np
 import re
 from bs4 import BeautifulSoup
 
+from gensim.models import Word2Vec
+from nltk import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem.snowball import SnowballStemmer
+import string
+
 
 def clean_str(string, max_seq_len):
     """
@@ -80,3 +86,38 @@ if __name__ == '__main__':
     print("x_train: {}".format(len(x_train)))
     print("x_val: {}".format(len(x_val)))
     print("x_test: {}".format(len(x_test)))
+
+    stoplist = stopwords.words('english') + list(string.punctuation)
+    stemmer = SnowballStemmer('english')
+    x_train_texts = [[[stemmer.stem(word.lower()) for word in sent if word not in stoplist] for sent in para]
+                     for para in x_train]
+    x_test_texts = [[[stemmer.stem(word.lower()) for word in sent if word not in stoplist] for sent in para]
+                    for para in x_test]
+    x_val_texts = [[[stemmer.stem(word.lower()) for word in sent if word not in stoplist] for sent in para]
+                   for para in x_val]
+
+    ## calculate frequency of words
+    from collections import defaultdict
+
+    frequency1 = defaultdict(int)
+    for texts in x_train_texts:
+        for text in texts:
+            for token in text:
+                frequency1[token] += 1
+    for texts in x_test_texts:
+        for text in texts:
+            for token in text:
+                frequency1[token] += 1
+    for texts in x_val_texts:
+        for text in texts:
+            for token in text:
+                frequency1[token] += 1
+
+    ## remove  words with frequency less than 5.
+    x_train_texts = [[[token for token in text if frequency1[token] > 5]
+                      for text in texts] for texts in x_train_texts]
+
+    x_test_texts = [[[token for token in text if frequency1[token] > 5]
+                     for text in texts] for texts in x_test_texts]
+    x_val_texts = [[[token for token in text if frequency1[token] > 5]
+                    for text in texts] for texts in x_val_texts]
