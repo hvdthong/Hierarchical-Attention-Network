@@ -30,16 +30,16 @@ def clean_str(string, max_seq_len):
 
 
 ## creates a 3D list of format paragraph[sentence[word]]
-def create3DList(df,col, max_sent_len,max_seq_len):
-    x=[]
+def create3DList(df, col, max_sent_len, max_seq_len):
+    x = []
     for docs in df[col].as_matrix():
-        x1=[]
+        x1 = []
         idx = 0
         for seq in "|||".join(re.split("[.?!]", docs)).split("|||"):
-            x1.append(clean_str(seq,max_sent_len))
-            if(idx>=max_seq_len-1):
+            x1.append(clean_str(seq, max_sent_len))
+            if (idx >= max_seq_len - 1):
                 break
-            idx= idx+1
+            idx = idx + 1
         x.append(x1)
     return x
 
