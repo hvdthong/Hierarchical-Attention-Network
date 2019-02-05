@@ -1,5 +1,9 @@
 import pandas as pd
 import torch
+import torch.nn as nn
+from torch import optim
+import torch.nn.functional as F
+from torch.autograd import Variable
 import numpy as np
 import re
 from bs4 import BeautifulSoup
@@ -9,7 +13,10 @@ from nltk import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem.snowball import SnowballStemmer
 import string
+
+import itertools
 import more_itertools
+
 
 ## calculate frequency of words
 from collections import defaultdict
@@ -122,7 +129,7 @@ class SentenceRNN(nn.Module):
                 else:
                     r.append(inp[j][i])
             r1 = np.asarray([sub_list + [0] * (max_seq_len - len(sub_list)) for sub_list in r])
-            _s, state_word = self.wordRNN(torch.cuda.LongTensor(r1).view(-1, batch_size), hid_state_word)
+            _s, state_word = self.wordRNN(torch.cuda.LongTensor(r1).view(-1, self.batch_size), hid_state_word)
             if (s is None):
                 s = _s
             else:
@@ -238,3 +245,9 @@ if __name__ == '__main__':
 
     max_seq_len = max([len(seq) for seq in itertools.chain.from_iterable(x_train_vec + x_val_vec + x_test_vec)])
     max_sent_len = max([len(sent) for sent in (x_train_vec + x_val_vec + x_test_vec)])
+    print(max_seq_len, max_sent_len)
+
+    ## Padding the input
+    X_train_pad = [sub_list + [[0]] * (max_sent_len - len(sub_list)) for sub_list in x_train_vec]
+    X_val_pad = [sub_list + [[0]] * (max_sent_len - len(sub_list)) for sub_list in x_val_vec]
+    X_test_pad = [sub_list + [[0]] * (max_sent_len - len(sub_list)) for sub_list in x_test_vec]
