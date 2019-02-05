@@ -219,8 +219,10 @@ if __name__ == '__main__':
     texts = list(more_itertools.collapse(x_train_texts[:] + x_test_texts[:] + x_val_texts[:], levels=1))
 
     ## train word2vec model on all the words
-    word2vec = Word2Vec(texts, size=200, min_count=5)
-    word2vec.save("dictonary_yelp")
+    # word2vec = Word2Vec(texts, size=200, min_count=5)
+    # word2vec.save("dictonary_yelp")
+
+    word2vec = Word2Vec.load('dictonary_yelp')
 
     ## convert 3D text list to 3D list of index
     x_train_vec = [[[word2vec.wv.vocab[token].index for token in text]
