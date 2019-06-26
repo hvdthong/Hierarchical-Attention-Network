@@ -252,13 +252,29 @@ def train_early_stopping(batch_size, x_train, y_train, x_val, y_val, sent_attn_m
         print('Loss after %d epoch,(%s) is %f' % (i, timeSince(start), np.mean(loss_epoch)))
         print('Train Accuracy after %d epoch,(%s) is %f' % (i, timeSince(start), np.mean(acc_epoch)))
 
-        val_acc.append(validation_accuracy(batch_size, x_val, y_val, sent_attn_model))
-        print('Validation Accuracy after %d epoch,(%s) is %f' % (i, timeSince(start), val_acc[-1]))
+        # val_acc.append(validation_accuracy(batch_size, x_val, y_val, sent_attn_model))
+        # print('Validation Accuracy after %d epoch,(%s) is %f' % (i, timeSince(start), val_acc[-1]))
     return loss_full, acc_full, val_acc
+
+
+def test_accuracy(batch_size, x_test, y_test, sent_attn_model):
+    acc = []
+    test_length = len(x_test)
+    for j in range(int(test_length / batch_size)):
+        x, y = gen_batch(x_test, y_test, batch_size)
+        state_word = sent_attn_model.init_hidden_word()
+        state_sent = sent_attn_model.init_hidden_sent()
+
+        y_pred, state_sent = sent_attn_model(x, state_sent, state_word)
+        max_index = y_pred.max(dim=1)[1]
+        correct = (max_index == torch.cuda.LongTensor(y)).sum()
+        acc.append(float(correct) / batch_size)
+    return np.mean(acc)
 
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print('Device:', device)
     df = pd.read_csv('yelp.csv')
     print(df.head())
 
@@ -341,6 +357,7 @@ if __name__ == '__main__':
                    for text in texts] for texts in x_test_texts]
     x_val_vec = [[[word2vec.wv.vocab[token].index for token in text]
                   for text in texts] for texts in x_val_texts]
+    weights = torch.FloatTensor(word2vec.wv.syn0).cuda()
     weights = torch.FloatTensor(word2vec.wv.syn0)
     print('Shape of word vectors: ', weights.shape)
 
@@ -368,7 +385,7 @@ if __name__ == '__main__':
     batch_size = 2
 
     hid_size = 100
-    embedsize = 200
+    embedsize = 200  # equal with the embedding size from
 
     sent_attn = SentenceRNN(vocab_size, embedsize, batch_size, hid_size, classes)
     # sent_attn.cuda()
@@ -381,8 +398,27 @@ if __name__ == '__main__':
     sent_optimizer = torch.optim.SGD(sent_attn.parameters(), lr=learning_rate, momentum=momentum)
 
     criterion = nn.NLLLoss()
-    epoch = 200
+    epoch = 20
 
     loss_full, acc_full, val_acc = train_early_stopping(batch_size, X_train_pad, y_train_tensor, X_val_pad,
                                                         y_val_tensor, sent_attn, sent_optimizer, criterion, epoch,
                                                         10000, False)
+
+    import matplotlib.pyplot as plt
+
+    plt.plot(loss_full)
+    plt.ylabel('Training Loss')
+    plt.xlabel('Epoch')
+    plt.savefig('loss.png')
+
+    plt.plot(acc_full)
+    plt.ylabel('Training Accuracy')
+    plt.xlabel('Epoch')
+    plt.savefig('train_acc.png')
+
+    plt.plot(val_acc)
+    plt.ylabel('Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.savefig('val_acc.png')
+
+    test_accuracy(batch_size, X_test_pad, y_test_tensor, sent_attn)

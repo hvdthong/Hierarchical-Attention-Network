@@ -246,6 +246,21 @@ def train_early_stopping(batch_size, x_train, y_train, x_val, y_val, sent_attn_m
     return loss_full, acc_full, val_acc
 
 
+def test_accuracy(batch_size, x_test, y_test, sent_attn_model):
+    acc = []
+    test_length = len(x_test)
+    for j in range(int(test_length / batch_size)):
+        x, y = gen_batch(x_test, y_test, batch_size)
+        state_word = sent_attn_model.init_hidden_word()
+        state_sent = sent_attn_model.init_hidden_sent()
+
+        y_pred, state_sent = sent_attn_model(x, state_sent, state_word)
+        max_index = y_pred.max(dim=1)[1]
+        correct = (max_index == torch.cuda.LongTensor(y)).sum()
+        acc.append(float(correct) / batch_size)
+    return np.mean(acc)
+
+
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     df = pd.read_csv('yelp.csv')
@@ -370,8 +385,26 @@ if __name__ == '__main__':
     sent_optimizer = torch.optim.SGD(sent_attn.parameters(), lr=learning_rate, momentum=momentum)
 
     criterion = nn.NLLLoss()
-    epoch = 200
+    epoch = 10
 
     loss_full, acc_full, val_acc = train_early_stopping(batch_size, X_train_pad, y_train_tensor, X_val_pad,
                                                         y_val_tensor, sent_attn, sent_optimizer, criterion, epoch,
                                                         10000, False)
+    import matplotlib.pyplot as plt
+
+    plt.plot(loss_full)
+    plt.ylabel('Training Loss')
+    plt.xlabel('Epoch')
+    plt.savefig('loss.png')
+
+    plt.plot(acc_full)
+    plt.ylabel('Training Accuracy')
+    plt.xlabel('Epoch')
+    plt.savefig('train_acc.png')
+
+    plt.plot(val_acc)
+    plt.ylabel('Validation Accuracy')
+    plt.xlabel('Epoch')
+    plt.savefig('val_acc.png')
+
+    test_accuracy(batch_size, X_test_pad, y_test_tensor, sent_attn)
