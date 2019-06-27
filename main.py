@@ -69,7 +69,7 @@ def attention_mul(rnn_outputs, att_weights):
         a_i = att_weights[i]
         h_i = a_i * h_i
         h_i = h_i.unsqueeze(0)
-        if (attn_vectors is None):
+        if attn_vectors is None:
             attn_vectors = h_i
         else:
             attn_vectors = torch.cat((attn_vectors, h_i), 0)
@@ -124,13 +124,13 @@ class SentenceRNN(nn.Module):
         for i in range(len(inp[0])):
             r = None
             for j in range(len(inp)):
-                if (r is None):
+                if r is None:
                     r = [inp[j][i]]
                 else:
                     r.append(inp[j][i])
             r1 = np.asarray([sub_list + [0] * (max_seq_len - len(sub_list)) for sub_list in r])
             _s, state_word = self.wordRNN(torch.cuda.LongTensor(r1).view(-1, batch_size), hid_state_word)
-            if (s is None):
+            if s is None:
                 s = _s
             else:
                 s = torch.cat((s, _s), 0)
