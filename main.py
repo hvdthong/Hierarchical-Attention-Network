@@ -120,7 +120,7 @@ class SentenceRNN(nn.Module):
 
     def forward(self, inp, hid_state_sent, hid_state_word):
         s = None
-        ## Generating sentence vector through WordRNN
+        # Generating sentence vector through WordRNN
         for i in range(len(inp[0])):
             r = None
             for j in range(len(inp)):
@@ -135,7 +135,8 @@ class SentenceRNN(nn.Module):
             else:
                 s = torch.cat((s, _s), 0)
 
-                out_state, hid_state = self.sentRNN(s, hid_state_sent)
+                # out_state, hid_state = self.sentRNN(s, hid_state_sent)
+        out_state, hid_state = self.sentRNN(s, hid_state_sent)
         sent_annotation = self.sentattn(out_state)
         attn = F.softmax(self.attn_combine(sent_annotation), dim=1)
 
