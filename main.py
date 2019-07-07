@@ -93,7 +93,8 @@ class WordRNN(nn.Module):
     def forward(self, inp, hid_state):
         emb_out = self.embed(inp)
 
-        out_state, hid_state = self.wordRNN(emb_out, hid_state)
+        # out_state, hid_state = self.wordRNN(emb_out, hid_state)
+        out_state, hid_state = self.wordRNN(emb_out)
 
         word_annotation = self.wordattn(out_state)
         attn = F.softmax(self.attn_combine(word_annotation), dim=1)
@@ -136,7 +137,8 @@ class SentenceRNN(nn.Module):
                 s = torch.cat((s, _s), 0)
 
                 # out_state, hid_state = self.sentRNN(s, hid_state_sent)
-        out_state, hid_state = self.sentRNN(s, hid_state_sent)
+        # out_state, hid_state = self.sentRNN(s, hid_state_sent)
+        out_state, hid_state = self.sentRNN(s)
         sent_annotation = self.sentattn(out_state)
         attn = F.softmax(self.attn_combine(sent_annotation), dim=1)
 
